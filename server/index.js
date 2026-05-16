@@ -33,12 +33,16 @@ const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const quizCategoryRoutes = require('./routes/quizCategoryRoutes');
 const quizRoutes = require('./routes/quizRoutes');
+const classRoutes = require('./routes/classCategoryRoutes');
+const examCategoryRoutes = require('./routes/examCategoryRoutes');
 
 // Use Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/categories', quizCategoryRoutes);
 app.use('/api/quizzes', quizRoutes);
+app.use('/api/classes', classRoutes);
+app.use('/api/exams', examCategoryRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

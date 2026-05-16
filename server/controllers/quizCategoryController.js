@@ -1,8 +1,21 @@
 const QuizCategory = require('../models/QuizCategory');
+const Quiz = require('../models/Quiz');
 
 const getCategories = async (req, res) => {
   try {
-    const categories = await QuizCategory.find();
+    const { examId, classId } = req.query;
+    let categories;
+    
+    if (examId) {
+      const categoryIds = await Quiz.find({ examCategory: examId }).distinct('category');
+      categories = await QuizCategory.find({ _id: { $in: categoryIds } });
+    } else if (classId) {
+      const categoryIds = await Quiz.find({ classCategory: classId }).distinct('category');
+      categories = await QuizCategory.find({ _id: { $in: categoryIds } });
+    } else {
+      categories = await QuizCategory.find();
+    }
+    
     res.status(200).json(categories);
   } catch (err) {
     res.status(500).json({ message: 'Error fetching categories', error: err.message });
