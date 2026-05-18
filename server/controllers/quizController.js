@@ -90,6 +90,21 @@ const deleteQuiz = async (req, res) => {
   }
 };
 
+const userDeleteQuiz = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const quiz = await Quiz.findOne({ _id: id, user: req.user.id, isUserUploaded: true });
+    if (!quiz) {
+      return res.status(404).json({ message: 'MCQ not found or you do not have permission to delete it.' });
+    }
+    await Quiz.findByIdAndDelete(id);
+    res.status(200).json({ message: 'MCQ deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error deleting MCQ', error: err.message });
+  }
+};
+
 const uploadQuizzesFromPDF = async (req, res) => {
   try {
     const { category, classCategory, examCategory } = req.body;
@@ -125,7 +140,7 @@ const uploadQuizzesFromPDF = async (req, res) => {
       const optionMap = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
       const answerIndex = optionMap[answerLetter];
       
-      if (answerIndex !== undefined && options[answerIndex]) {
+      if (answerIndex !== undefined && options[answerIndex] && options.every(opt => opt.trim() !== '')) {
         extractedQuizzes.push({
           question,
           options,
@@ -141,7 +156,7 @@ const uploadQuizzesFromPDF = async (req, res) => {
       return res.status(400).json({ message: 'No valid questions found in the PDF. Please ensure the formatting follows: 1. Question A) Opt1 B) Opt2 C) Opt3 D) Opt4 Answer: A' });
     }
 
-    const savedQuizzes = await Quiz.insertMany(extractedQuizzes);
+    const savedQuizzes = await Quiz.insertMany(extractedQuizzes, { ordered: false });
     res.status(201).json({ message: `Successfully extracted and posted ${savedQuizzes.length} questions.` });
   } catch (err) {
     console.error('PDF Processing Error:', err);
@@ -179,7 +194,7 @@ const userUploadQuizzesFromPDF = async (req, res) => {
       const optionMap = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
       const answerIndex = optionMap[answerLetter];
       
-      if (answerIndex !== undefined && options[answerIndex]) {
+      if (answerIndex !== undefined && options[answerIndex] && options.every(opt => opt.trim() !== '')) {
         extractedQuizzes.push({
           question,
           options,
@@ -194,12 +209,12 @@ const userUploadQuizzesFromPDF = async (req, res) => {
       return res.status(400).json({ message: 'No valid questions found in the PDF. Please ensure the formatting follows: 1. Question A) Opt1 B) Opt2 C) Opt3 D) Opt4 Answer: A' });
     }
 
-    await Quiz.insertMany(extractedQuizzes);
-    res.status(201).json({ message: `Successfully extracted and uploaded ${extractedQuizzes.length} questions.` });
+    const savedQuizzes = await Quiz.insertMany(extractedQuizzes, { ordered: false });
+    res.status(201).json({ message: `Successfully extracted and uploaded ${savedQuizzes.length} questions.` });
   } catch (err) {
     console.error('PDF Processing Error:', err);
     res.status(500).json({ message: 'Error processing PDF: ' + err.message, error: err.message });
   }
 };
 
-module.exports = { getQuizzes, getUserQuizzes, createQuiz, updateQuiz, deleteQuiz, uploadQuizzesFromPDF, userCreateQuiz, userUploadQuizzesFromPDF };
+module.exports = { getQuizzes, getUserQuizzes, createQuiz, updateQuiz, deleteQuiz, uploadQuizzesFromPDF, userCreateQuiz, userUploadQuizzesFromPDF, userDeleteQuiz };

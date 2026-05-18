@@ -45,6 +45,17 @@ app.use('/api/classes', classRoutes);
 app.use('/api/exams', examCategoryRoutes);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+});
+
+server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+        console.error(`\n❌ ERROR: Port ${PORT} is already in use by another process.`);
+        console.error(`   ➜  Run this command to free it: Stop-Process -Id (Get-NetTCPConnection -LocalPort ${PORT}).OwningProcess -Force`);
+        console.error(`   ➜  Then run: npm start\n`);
+        process.exit(1);
+    } else {
+        throw err;
+    }
 });
